@@ -91,11 +91,12 @@ input logic [31:0] br_cond_opa, br_cond_opb,
 input logic [4:0] func,
 input logic [2:0] id_ex_funct3,
 
-output logic [31:0] result,
+output logic [63:0] result,
 output logic brcond_result
 );
 
 logic [63:0] temp;
+assign temp = opa * opb;
 
 //result 
 always_comb begin
@@ -111,6 +112,8 @@ always_comb begin
 		`ALU_SRA: 	result = $signed(opa) >>> opb[4:0]; 
 		`ALU_SLT: 	result = {31'd0, ($signed(opa)< $signed(opb))};
 		`ALU_SLTU:	result = {31'd0, (opa < opb)};
+		`ALU_MUL:	result[31:0] = temp[31:0];
+		`ALU_MULHU:	result[63:32] = temp [63:32];
 		default: 	result = 32'hbaadbeef;  
 	endcase	
 end
