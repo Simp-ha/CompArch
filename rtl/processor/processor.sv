@@ -133,6 +133,7 @@ assign pipeline_commit_wr_data 	= wb_reg_wr_data_out;
 assign pipeline_commit_NPC 		= if_NPC_out;
 assign pipeline_commit_wr 		= mem_wb_reg_wr;
 logic  valid_enable;
+logic flash;
 
 //////////////////////////////////////////////////
 //                                              //
@@ -324,7 +325,6 @@ ex_stage ex_stage_0 (
 //////////////////////////////////////////////////
 assign ex_mem_enable = 1; // always enabled
 // synopsys sync_set_rst "rst"
-logic flash;
 always_ff @(posedge clk or posedge rst) begin
 	if (rst) begin
 		//Control
