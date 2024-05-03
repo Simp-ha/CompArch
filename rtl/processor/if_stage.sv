@@ -1,18 +1,18 @@
 `ifdef MODEL_TECH
-	`include "../sys_defs.vh"
+`include "../sys_defs.vh"
 `endif
 
 module if_stage  (input logic clk,             // system clk
 				  input logic 	      rst,             // system rst
 				  input logic 	      mem_wb_valid_inst, 
-			    input logic   	  	ex_take_branch_out,// taken-branch signal
+			      input logic   	  	ex_take_branch_out,// taken-branch signal
 				  input logic [31:0]  ex_target_PC_out,  // target pc: use if take_branch is TRUE
 				  input logic [31:0]  Imem2proc_data,    // Data coming back from instruction-memory
 					
 				  output logic [31:0] proc2Imem_addr,    // Address sent to Instruction memory
 				  output logic [31:0] if_PC_out,         // current PC
 				  output logic [31:0] if_NPC_out,        // PC + 4
-			    output logic [31:0] if_IR_out,         // fetched instruction out
+			      output logic [31:0] if_IR_out,         // fetched instruction out
 				  output logic        if_valid_inst_out  // when low, instruction is garbage
 				  );
 

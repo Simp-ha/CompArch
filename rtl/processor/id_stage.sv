@@ -271,7 +271,7 @@ assign alu_imm = {{20{if_id_IR[31]}}, if_id_IR[31:20]};
 
 always_comb begin : immediate_mux
 	case(if_id_IR[6:0])
-		`S_TYPE: id_immediate_out = mem_disp;
+		`S_TYPE: jid_immediate_out = mem_disp;
 		`B_TYPE: id_immediate_out = br_disp;
 		`J_TYPE: id_immediate_out = jmp_disp;
 		`U_LD_TYPE, `U_AUIPC_TYPE: id_immediate_out = up_imm;
@@ -285,5 +285,17 @@ assign pc_add_opa =(if_id_IR[6:0] == `I_JAL_TYPE)? id_ra_value_out:if_id_PC;
 //target PC to branch to
 
 assign id_funct3_out = if_id_IR[14:12];
+
+always_comb begin : 
+	case(if_id_IR[6:0])
+		`R_TYPE: begin
+
+		end	
+		`I_ARITH_TYPE, `I_LD_TYPE, `I_JAL_TYPE	: begin 
+
+		end
+	endcase
+end
+
 
 endmodule // module id_stage

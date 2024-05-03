@@ -142,8 +142,8 @@ logic flash;
 //////////////////////////////////////////////////
 if_stage if_stage_0 (
 // Inputs
-.clk 				(clk),
-.rst 				(rst),
+.clk 					(clk),
+.rst 					(rst),
 .mem_wb_valid_inst		(valid_enable), // might be the mem_wb_valid_inst-> if_valid_inst_out
 .ex_take_branch_out		(ex_mem_take_branch),
 .ex_target_PC_out		(ex_mem_target_PC),
@@ -166,8 +166,7 @@ if_stage if_stage_0 (
 assign if_id_enable = 1;
 
 always_ff @(posedge clk or posedge rst) begin
-	if(rst|flash) begin
-		flash = 0;
+	if(rst|ex_take_branch_out) begin
 		if_id_PC         	<=  0;
 		if_id_IR         	<=  `NOOP_INST;
 		if_id_NPC        	<=  0;
@@ -178,16 +177,16 @@ always_ff @(posedge clk or posedge rst) begin
     else if ((mem_wb_dest_reg_idx == id_dest_reg_idx_out)|
 						!(id_dest_reg_idx_out == if_id_IR[19:15]|id_dest_reg_idx_out == if_id_IR[24:20])) 
 		begin
-			if_id_PC         <=  if_PC_out;
-			if_id_NPC        <=  if_NPC_out;
-			if_id_IR         <=  if_IR_out;
-			if_id_valid_inst <= if_valid_inst_out;
-			valid_enable  <=  1;
+			if_id_PC         	<=  if_PC_out;
+			if_id_NPC        	<=  if_NPC_out;
+			if_id_IR         	<=  if_IR_out;
+			if_id_valid_inst 	<=  if_valid_inst_out;
+			valid_enable  		<=  1;
 		end
 		//Stall -- NOOP -- 
 		else begin
-			if_id_IR      <=  `NOOP_INST;
-			valid_enable  <=  0;
+			if_id_IR      		<=  `NOOP_INST;
+			valid_enable  		<=  0;
     	end
 	end
 end 
@@ -237,8 +236,7 @@ id_stage id_stage_0 (
 assign id_ex_enable =1; // disabled when HzDU initiates a stall
 // synopsys sync_set_rst "rst"
 always_ff @(posedge clk or posedge rst) begin
-	if (rst|flash) begin //sys_rst
-		flash = 0;
+	if (rst|ex_take_branch_out) begin //sys_rst
 		//Control
 		id_ex_funct3		<=  0;
 		id_ex_opa_select    <=  `ALU_OPA_IS_REGA;
