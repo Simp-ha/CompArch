@@ -132,8 +132,6 @@ assign pipeline_commit_wr_idx 	= mem_wb_dest_reg_idx;
 assign pipeline_commit_wr_data 	= wb_reg_wr_data_out;
 assign pipeline_commit_NPC 		= if_NPC_out;
 assign pipeline_commit_wr 		= mem_wb_reg_wr;
-logic  valid_enable;
-logic flash;
 
 //////////////////////////////////////////////////
 //                                              //
@@ -144,7 +142,7 @@ if_stage if_stage_0 (
 // Inputs
 .clk 					(clk),
 .rst 					(rst),
-.mem_wb_valid_inst		(valid_enable), // might be the mem_wb_valid_inst-> if_valid_inst_out
+.mem_wb_valid_inst		(mem_wb_valid_inst), // might be the mem_wb_valid_inst-> if_valid_inst_out
 .ex_take_branch_out		(ex_mem_take_branch),
 .ex_target_PC_out		(ex_mem_target_PC),
 .Imem2proc_data			(instruction),
@@ -171,25 +169,17 @@ always_ff @(posedge clk or posedge rst) begin
 		if_id_IR         	<=  `NOOP_INST;
 		if_id_NPC        	<=  0;
     	if_id_valid_inst 	<=  0;
-		valid_enable		<=  1;
   	end 
 	//Comparing the registers of the next instruction with the reg destination of previous instruction
-    else if ((mem_wb_dest_reg_idx == id_dest_reg_idx_out)|
-						!(id_dest_reg_idx_out == if_id_IR[19:15]|id_dest_reg_idx_out == if_id_IR[24:20])) 
-		begin
+    else begin
+		if (if_id_enable) begin
 			if_id_PC         	<=  if_PC_out;
 			if_id_NPC        	<=  if_NPC_out;
 			if_id_IR         	<=  if_IR_out;
 			if_id_valid_inst 	<=  if_valid_inst_out;
-			valid_enable  		<=  1;
 		end
-		//Stall -- NOOP -- 
-		else begin
-			if_id_IR      		<=  `NOOP_INST;
-			valid_enable  		<=  0;
-    	end
 	end
-end 
+end
 
    
 //////////////////////////////////////////////////
@@ -203,6 +193,8 @@ id_stage id_stage_0 (
 .rst   					(rst),
 .if_id_IR   			(if_id_IR),
 .if_id_PC				(if_id_PC),
+.id_ex_dest_reg_idx 	(id_ex_dest_reg_idx),
+.ex_mem_dest_reg_idx	(ex_mem_dest_reg_idx),
 .mem_wb_dest_reg_idx	(mem_wb_dest_reg_idx),
 .mem_wb_valid_inst    	(mem_wb_valid_inst),
 .mem_wb_reg_wr			(mem_wb_reg_wr), 
@@ -225,7 +217,8 @@ id_stage id_stage_0 (
 .cond_branch			(id_cond_branch),
 .uncond_branch			(id_uncond_branch),
 .id_illegal_out			(id_illegal_out),
-.id_valid_inst_out		(id_valid_inst_out)
+.id_valid_inst_out		(id_valid_inst_out), 
+.stall					(stall)
 );
 
 //////////////////////////////////////////////////
