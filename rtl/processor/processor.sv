@@ -175,21 +175,19 @@ always_ff @(posedge clk or posedge rst) begin
   	end 
 	//Comparing the registers of the next instruction with the reg destination of previous instruction
     else if ((mem_wb_dest_reg_idx == id_dest_reg_idx_out)|
-						!(id_dest_reg_idx_out == if_id_IR[19:15]|id_dest_reg_idx_out == if_id_IR[24:20])) 
-		begin
-			if_id_PC         	<=  if_PC_out;
-			if_id_NPC        	<=  if_NPC_out;
-			if_id_IR         	<=  if_IR_out;
-			if_id_valid_inst 	<=  if_valid_inst_out;
-			valid_enable  		<=  1;
-		end
-		//Stall -- NOOP -- 
-		else begin
-			if_id_IR      		<=  `NOOP_INST;
-			valid_enable  		<=  0;
-    	end
+						!(id_dest_reg_idx_out == if_id_IR[19:15]|id_dest_reg_idx_out == if_id_IR[24:20])) begin
+		if_id_PC         	<=  if_PC_out;
+		if_id_NPC        	<=  if_NPC_out;
+		if_id_IR         	<=  if_IR_out;
+		if_id_valid_inst 	<=  if_valid_inst_out;
+		valid_enable  		<=  1;
 	end
-end 
+	//Stall -- NOOP -- 
+	else begin
+		if_id_IR      		<=  `NOOP_INST;
+		valid_enable  		<=  0;
+	end
+end
 
    
 //////////////////////////////////////////////////
