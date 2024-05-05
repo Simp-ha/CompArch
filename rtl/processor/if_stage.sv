@@ -52,7 +52,7 @@ always_ff @(posedge clk) begin
 	if (rst)
 		if_valid_inst_out <= 1; 
 	else
-		if_valid_inst_out <= mem_wb_valid_inst;
+		if_valid_inst_out <= 1;
 end
 
 endmodule  // module if_stage

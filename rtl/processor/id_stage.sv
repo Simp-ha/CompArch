@@ -290,7 +290,7 @@ assign pc_add_opa =(if_id_IR[6:0] == `I_JAL_TYPE)? id_ra_value_out:if_id_PC;
 assign id_funct3_out = if_id_IR[14:12];
 
 
-always_comb begin : 
+always_comb begin : stall_procedure
 	case(if_id_IR[6:0])
 		`R_TYPE: begin
 			if((ra_idx!=0 & (ra_idx == id_ex_dest_reg_idx )|(ra_idx == ex_mem_dest_reg_idx )|(ra_idx == mem_wb_dest_reg_idx))|
