@@ -33,7 +33,7 @@ assign PC_plus_4 = PC_reg + 4;
 assign next_PC = (ex_take_branch_out) ? ex_target_PC_out : PC_plus_4;
 
 // stall PC
-assign PC_enable = if_valid_inst_out | ex_take_branch_out;
+assign PC_enable = (if_valid_inst_out | ex_take_branch_out)& !stall;
 
 // Pass PC down pipeline w/instruction
 assign if_PC_out = PC_reg;
