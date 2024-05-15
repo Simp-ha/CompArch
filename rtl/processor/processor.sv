@@ -132,7 +132,9 @@ assign pipeline_commit_wr_idx 	= mem_wb_dest_reg_idx;
 assign pipeline_commit_wr_data 	= wb_reg_wr_data_out;
 assign pipeline_commit_NPC 		= if_NPC_out;
 assign pipeline_commit_wr 		= mem_wb_reg_wr;
-
+logic  valid_enable;
+logic flash;
+logic stall;
 //////////////////////////////////////////////////
 //                                              //
 //                  IF-Stage                    //
@@ -143,8 +145,9 @@ if_stage if_stage_0 (
 .clk 					(clk),
 .rst 					(rst),
 .mem_wb_valid_inst		(mem_wb_valid_inst), // might be the mem_wb_valid_inst-> if_valid_inst_out
-.ex_take_branch_out		(ex_mem_take_branch),
-.ex_target_PC_out		(ex_mem_target_PC),
+.stall					(stall), 
+.ex_take_branch_out		(ex_take_branch_out),
+.ex_target_PC_out		(ex_target_PC_out),
 .Imem2proc_data			(instruction),
 
 
@@ -161,7 +164,7 @@ if_stage if_stage_0 (
 //            IF/ID Pipeline Register           //
 //                                              //
 //////////////////////////////////////////////////
-assign if_id_enable = 1;
+assign if_id_enable = !stall;
 
 always_ff @(posedge clk or posedge rst) begin
 	if(rst|ex_take_branch_out) begin
@@ -171,15 +174,14 @@ always_ff @(posedge clk or posedge rst) begin
     	if_id_valid_inst 	<=  0;
   	end 
 	//Comparing the registers of the next instruction with the reg destination of previous instruction
-    else begin
-		if (if_id_enable) begin
-			if_id_PC         	<=  if_PC_out;
-			if_id_NPC        	<=  if_NPC_out;
-			if_id_IR         	<=  if_IR_out;
-			if_id_valid_inst 	<=  if_valid_inst_out;
+    	else if (if_id_enable) begin
+			if_id_PC         <=  if_PC_out;
+			if_id_NPC        <=  if_NPC_out;
+			if_id_IR         <=  if_IR_out;
+			if_id_valid_inst <= if_valid_inst_out;
 		end
-	end
 end
+
 
    
 //////////////////////////////////////////////////
@@ -193,13 +195,21 @@ id_stage id_stage_0 (
 .rst   					(rst),
 .if_id_IR   			(if_id_IR),
 .if_id_PC				(if_id_PC),
-.id_ex_dest_reg_idx 	(id_ex_dest_reg_idx),
-.ex_mem_dest_reg_idx	(ex_mem_dest_reg_idx),
 .mem_wb_dest_reg_idx	(mem_wb_dest_reg_idx),
 .mem_wb_valid_inst    	(mem_wb_valid_inst),
 .mem_wb_reg_wr			(mem_wb_reg_wr), 
 .wb_reg_wr_data_out     (wb_reg_wr_data_out),  	
 .if_id_valid_inst       (if_id_valid_inst),
+.id_ex_rd_mem           (id_ex_rd_mem),
+.ex_mem_rd_mem          (ex_mem_rd_mem),
+.mem_wb_rd_mem          (mem_wb_rd_mem),
+.id_ex_dest_reg_idx 	(id_ex_dest_reg_idx),
+.ex_mem_dest_reg_idx 	(ex_mem_dest_reg_idx),
+.ex_alu_result_out		(ex_alu_result_out),
+.ex_mem_alu_result   	(ex_mem_alu_result),
+.mem_wb_alu_result		(mem_wb_alu_result),
+.mem_wb_mem_result		(mem_wb_mem_result),
+.mem_result_out		    (mem_result_out),
 
 // Outputs
 .id_reg_wr_out      	(id_reg_wr_out),
@@ -217,8 +227,8 @@ id_stage id_stage_0 (
 .cond_branch			(id_cond_branch),
 .uncond_branch			(id_uncond_branch),
 .id_illegal_out			(id_illegal_out),
-.id_valid_inst_out		(id_valid_inst_out), 
-.stall					(stall)	
+.id_valid_inst_out		(id_valid_inst_out),
+.stall					(stall)
 );
 
 //////////////////////////////////////////////////
@@ -229,7 +239,8 @@ id_stage id_stage_0 (
 assign id_ex_enable =!stall; // disabled when HzDU initiates a stall
 // synopsys sync_set_rst "rst"
 always_ff @(posedge clk or posedge rst) begin
-	if (rst|ex_take_branch_out|stall) begin //sys_rst
+	if (rst|stall|ex_take_branch_out) begin //sys_rst
+		//flash = 0;
 		//Control
 		id_ex_funct3		<=  0;
 		id_ex_opa_select    <=  `ALU_OPA_IS_REGA;
@@ -256,7 +267,8 @@ always_ff @(posedge clk or posedge rst) begin
 		id_ex_NPC           <=  0;
     end 
 	else begin 
-		if (id_ex_enable) begin
+		if (id_ex_enable) 
+		begin
 			id_ex_funct3		<=  id_funct3_out;
 			id_ex_opa_select    <=  id_opa_select_out;
 			id_ex_opb_select    <=  id_opb_select_out;
@@ -278,7 +290,7 @@ always_ff @(posedge clk or posedge rst) begin
 			id_ex_pc_add_opa	<=  id_pc_add_opa;
 			id_ex_uncond_branch <=  id_uncond_branch;
 			id_ex_cond_branch	<=  id_cond_branch;
-		end
+		end 
     end // else: !if(rst)
 end // always
 
@@ -336,6 +348,9 @@ always_ff @(posedge clk or posedge rst) begin
 		ex_mem_NPC			<=  0;
 	end
 	else begin
+		if (id_ex_IR[6:0] == `J_TYPE|id_ex_IR[6:0] == `B_TYPE ) begin
+			//flash = 1; 		
+		end
 		if(ex_mem_enable) begin
 			ex_mem_funct3		<=  id_ex_funct3;
 			ex_mem_rd_mem       <=  id_ex_rd_mem;
