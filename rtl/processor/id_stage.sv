@@ -201,6 +201,8 @@ output logic       	stall	  				// valid flag for processor
    
 logic dest_reg_select;
 logic [31:0] rb_val;
+logic [31:0] ra_val;
+
 
 //instruction fields read from IF/ID pipeline register
 logic[4:0] ra_idx; 
@@ -218,7 +220,7 @@ assign write_en=mem_wb_valid_inst & mem_wb_reg_wr;
 regfile regf_0(.clk		(clk),
 			   .rst		(rst),
 			   .rda_idx	(ra_idx),
-			   .rda_out	(id_ra_value_out), 
+			   .rda_out	(ra_val), 
 			   .rdb_idx	(rb_idx),
 			   .rdb_out	(rb_val), 
 			   .wr_en	(write_en),
@@ -294,15 +296,14 @@ end
 assign pc_add_opa =(if_id_IR[6:0] == `I_JAL_TYPE)? id_ra_value_out:if_id_PC;
 
 
-
 assign id_funct3_out = if_id_IR[14:12];
+
 always_comb begin
 	stall = 0;
 	case(if_id_IR[6:0])
 		`R_TYPE : begin
 			if(ra_idx != 0) begin
-				case(ra_idx)
-					id_ex_dest_reg_idx : begin
+				if(ra_idx==id_ex_dest_reg_idx)  begin
 						if(id_ex_rd_mem) 
 							stall = 1;
 						else if(mem_wb_rd_mem) begin
@@ -313,7 +314,7 @@ always_comb begin
 							id_ra_value_out = ex_alu_result_out;
 					end
 
-					ex_mem_dest_reg_idx : begin 
+					else if(ra_idx==ex_mem_dest_reg_idx) begin 
 						if(ex_mem_rd_mem) 
 							stall = 1;
 						else if(mem_wb_rd_mem) begin
@@ -324,42 +325,59 @@ always_comb begin
 							id_ra_value_out = ex_mem_alu_result;
 					end
 
-					mem_wb_dest_reg_idx : id_ra_value_out = mem_wb_alu_result;
-				endcase
-			end
+					else if(ra_idx==mem_wb_dest_reg_idx)  begin
+						if(mem_wb_rd_mem)
+							id_ra_value_out = mem_wb_mem_result;
+						else
+							id_ra_value_out = mem_wb_alu_result;
+					end
+					else
+						id_ra_value_out = ra_val;
+					// default:  id_ra_value_out = ra_val;
+
+				// endcase
+			end else id_ra_value_out = ra_val;
+			
 
 			if(rb_idx != 0) begin
-				case(rb_idx)
-					id_ex_dest_reg_idx : begin
+					if(rb_idx==id_ex_dest_reg_idx) begin
 						if(id_ex_rd_mem) 
 							stall = 1;
 						else if(mem_wb_rd_mem) begin
 							stall = 0;
-							rb_val = mem_wb_mem_result;
+							id_rb_value_out = mem_wb_mem_result;
 						end
 						else 
-							rb_val = ex_alu_result_out;
+							id_rb_value_out = ex_alu_result_out;
 					end
 
-					ex_mem_dest_reg_idx : begin 
+					else if(rb_idx==ex_mem_dest_reg_idx) begin
 						if(ex_mem_rd_mem) 
 							stall = 1;
 						else if(mem_wb_rd_mem) begin
 							stall = 0;
-							rb_val = mem_wb_mem_result;
+							id_rb_value_out = mem_wb_mem_result;
 						end
 						else
-							rb_val = ex_mem_alu_result;
+							id_rb_value_out = ex_mem_alu_result;
 					end
-					mem_wb_dest_reg_idx : rb_val = mem_wb_alu_result;
-				endcase	
-			end	
+					else if(rb_idx==mem_wb_dest_reg_idx) begin
+						if(mem_wb_rd_mem)
+							id_rb_value_out = mem_wb_mem_result;
+						else
+							id_rb_value_out = mem_wb_alu_result;
+					end
+					else
+						id_rb_value_out = rb_val;
+			end 
+			else id_rb_value_out = rb_val;
+				
 		end
 
 		`I_ARITH_TYPE, `S_TYPE, `I_LD_TYPE : begin
 			if(ra_idx != 0) begin
-				case(ra_idx)
-					id_ex_dest_reg_idx : begin
+				// case(ra_idx)
+					if(ra_idx==id_ex_dest_reg_idx)  begin
 						if(id_ex_rd_mem) 
 							stall = 1;
 						else if(mem_wb_rd_mem) begin
@@ -370,7 +388,7 @@ always_comb begin
 							id_ra_value_out = ex_alu_result_out;
 					end
 
-					ex_mem_dest_reg_idx : begin 
+					else if(ra_idx==ex_mem_dest_reg_idx) begin 
 						if(ex_mem_rd_mem) 
 							stall = 1;
 						else if(mem_wb_rd_mem) begin
@@ -381,9 +399,19 @@ always_comb begin
 							id_ra_value_out = ex_mem_alu_result;
 					end
 
-					mem_wb_dest_reg_idx : id_ra_value_out = mem_wb_alu_result;
-				endcase
-			end
+					else if(ra_idx==mem_wb_dest_reg_idx)  begin
+						if(mem_wb_rd_mem)
+							id_ra_value_out = mem_wb_mem_result;
+						else
+							id_ra_value_out = mem_wb_alu_result;
+					end
+					else
+						id_ra_value_out = ra_val;
+					// default:  id_ra_value_out = ra_val;
+
+				// endcase
+			end else id_ra_value_out = ra_val;
+			
 		end
 		
 //			`I_LD_TYPE	: begin
@@ -398,7 +426,7 @@ always_comb begin
 	endcase
 end
 
-assign id_rb_value_out = rb_val;
+// assign id_ra_value_out = ra_val;
 
 //always_comb begin
 //	stall =0;
