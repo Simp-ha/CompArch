@@ -6,7 +6,22 @@ vlog -f files_rtl.f
 
 vsim -novopt processor_tb
 log -r /*
+run -all
+add wave -position insertpoint  \
+sim:/processor_tb/proc_module/if_id_IR
+add wave -position insertpoint  \
+sim:/processor_tb/proc_module/id_ex_IR
+add wave -position insertpoint  \
+sim:/processor_tb/proc_module/ex_mem_IR
+add wave -position insertpoint  \
+sim:/processor_tb/proc_module/mem_wb_IR
+add wave -position insertpoint sim:/processor_tb/proc_module/id_stage_0/regf_0/*
+add wave -position insertpoint  \
+sim:/processor_tb/proc_module/id_stage_0/regf_0/registers
+add wave -position insertpoint  \
+sim:/processor_tb/proc_module/id_stage_0/regf_0/clk
 
+<<<<<<< HEAD
 add wave -position insertpoint  \
 sim:/processor_tb/proc_module/id_stage_0/regf_0/registers
 add wave -position insertpoint  \
@@ -23,4 +38,7 @@ sim:/processor_tb/proc_module/ex_mem_IR
 add wave -position insertpoint  \
 sim:/processor_tb/proc_module/mem_wb_IR
 
+=======
+restart  -f 
+>>>>>>> 8a497e0 (simulation.do file update)
 run -all
